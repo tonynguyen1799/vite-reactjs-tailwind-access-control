@@ -1,60 +1,84 @@
-// src/contexts/AuthContext.tsx
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { loginApi, getMeApi } from '../apis/auth.api';
+
+// A more detailed user type based on your APIs.yaml
+type User = {
+	textId: string;
+	username: string;
+	email: string;
+	enabled: boolean;
+	roles: string[];
+};
 
 type AuthContextType = {
 	isAuthenticated: boolean;
-	user: { username: string } | null;
-	login: (username: string, password: string) => boolean;
+	user: User | null;
+	login: (username: string, password: string) => Promise<boolean>;
 	logout: () => void;
-	error: string | null;
+	loading: boolean; // To handle loading state
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-	const [isAuthenticated, setIsAuthenticated] = useState(() => {
-		return Boolean(localStorage.getItem('token'));
-	});
-	const [user, setUser] = useState<{ username: string } | null>(null);
-	const [error, setError] = useState<string | null>(null);
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+	const [isAuthenticated, setIsAuthenticated] = useState(false);
+	const [user, setUser] = useState<User | null>(null);
+	const [loading, setLoading] = useState(true); // Start with loading true to check for existing session
 
 	useEffect(() => {
-		const token = localStorage.getItem('token');
-		if (token && token !== 'undefined') {
-			setIsAuthenticated(true);
-			setUser({ username: 'admin' });
-		} else {
-			setIsAuthenticated(false);
-			setUser(null);
-		}
-
-		return () => {
-			// Cleanup logic if needed in future (e.g., clear timers, listeners)
+		const checkUserSession = async () => {
+			const token = localStorage.getItem('token');
+			if (token && token !== 'undefined') {
+				try {
+					const response = await getMeApi();
+					setUser(response.data.data);
+					setIsAuthenticated(true);
+				} catch (error) {
+					console.error('Session check failed', error);
+					// Token is invalid, so log out
+					localStorage.removeItem('token');
+					localStorage.removeItem('refreshToken');
+				}
+			}
+			setLoading(false);
 		};
+
+		checkUserSession();
 	}, []);
 
-	const login = (username: string, password: string) => {
-		if (username === 'admin' && password === 'admin123') {
-			localStorage.setItem('token', 'mock-token');
+	const login = async (username: string, password: string) => {
+		try {
+			const response = await loginApi({ username, password });
+			const { token, refreshToken } = response.data.data;
+
+			localStorage.setItem('token', token);
+			localStorage.setItem('refreshToken', refreshToken);
+
+			// Fetch user info after login
+			const meResponse = await getMeApi();
+			setUser(meResponse.data.data);
 			setIsAuthenticated(true);
-			setUser({ username });
-			setError(null);
 			return true;
-		} else {
-			setError('Invalid credentials. Please try again.');
+		} catch (error) {
+			console.error('Login failed:', error);
+			// Clear any partial login artifacts
+			localStorage.removeItem('token');
+			localStorage.removeItem('refreshToken');
+			setIsAuthenticated(false);
+			setUser(null);
 			return false;
 		}
 	};
 
 	const logout = () => {
 		localStorage.removeItem('token');
+		localStorage.removeItem('refreshToken');
 		setIsAuthenticated(false);
 		setUser(null);
-		setError(null);
 	};
 
 	return (
-		<AuthContext.Provider value={{ isAuthenticated, user, login, logout, error }}>
+		<AuthContext.Provider value={{ isAuthenticated, user, login, logout, loading }}>
 			{children}
 		</AuthContext.Provider>
 	);

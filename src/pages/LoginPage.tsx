@@ -1,4 +1,3 @@
-// src/pages/LoginPage.tsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiLock, FiUser } from 'react-icons/fi';
@@ -6,18 +5,27 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNotification } from '../contexts/NotificationContext';
 
 export default function LoginPage() {
-	const [username, setUsername] = useState('');
-	const [password, setPassword] = useState('');
+	const [username, setUsername] = useState('admin'); // Pre-filled for convenience
+	const [password, setPassword] = useState('admin123'); // Pre-filled for convenience
+	const [isLoading, setIsLoading] = useState(false);
 	const navigate = useNavigate();
 	const { login } = useAuth();
 	const { notify } = useNotification();
 
 	const handleLogin = async () => {
-		const success = login(username, password);
-		if (success) {
-			navigate('/users');
-		} else {
-			notify('Login failed: Invalid credentials', 'error');
+		setIsLoading(true);
+		try {
+			const success = await login(username, password);
+			if (success) {
+				navigate('/users');
+			} else {
+				notify('Login failed: Invalid credentials or server error', 'error');
+			}
+		} catch (error) {
+			console.error(error);
+			notify('An unexpected error occurred.', 'error');
+		} finally {
+			setIsLoading(false);
 		}
 	};
 
@@ -28,7 +36,7 @@ export default function LoginPage() {
 				<div className="mb-4 transition duration-300 ease-in-out">
 					<label className="block text-sm font-medium text-gray-700 mb-1">Username</label>
 					<div className="flex items-center border rounded px-3 py-2 hover:shadow-sm focus-within:ring-2 focus-within:ring-blue-200">
-						<FiUser className="text-gray-400 mr-2 transition-transform duration-300 group-hover:scale-105" />
+						<FiUser className="text-gray-400 mr-2" />
 						<input
 							type="text"
 							value={username}
@@ -41,7 +49,7 @@ export default function LoginPage() {
 				<div className="mb-6 transition duration-300 ease-in-out">
 					<label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
 					<div className="flex items-center border rounded px-3 py-2 hover:shadow-sm focus-within:ring-2 focus-within:ring-blue-200">
-						<FiLock className="text-gray-400 mr-2 transition-transform duration-300 group-hover:scale-105" />
+						<FiLock className="text-gray-400 mr-2" />
 						<input
 							type="password"
 							value={password}
@@ -53,9 +61,10 @@ export default function LoginPage() {
 				</div>
 				<button
 					onClick={handleLogin}
-					className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-md transition duration-300 transform hover:-translate-y-0.5"
+					disabled={isLoading}
+					className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-md transition duration-300 transform hover:-translate-y-0.5 disabled:bg-blue-400 disabled:cursor-not-allowed"
 				>
-					Sign In
+					{isLoading ? 'Signing In...' : 'Sign In'}
 				</button>
 			</div>
 		</div>
