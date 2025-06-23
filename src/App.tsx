@@ -1,37 +1,38 @@
-// src/App.tsx
 import { Routes, Route, Navigate } from 'react-router-dom';
 import DashboardLayout from './layouts/DashboardLayout';
 import LoginPage from './pages/LoginPage';
 import UsersPage from './pages/UsersPage';
 import RolesPage from './pages/RolesPage';
-import { useAuth } from './contexts/AuthContext';
+import DashboardPage from './pages/DashboardPage';
+import RequireAuth from './auth/RequireAuth';
+import { useAuth } from './contexts/useAuth';
 
 function App() {
-	const { isAuthenticated } = useAuth();
+  const { user } = useAuth();
 
-	return (
-		<Routes>
-			<Route
-				path="/login"
-				element={
-					isAuthenticated ? <Navigate to="/users" replace /> : <LoginPage />
-				}
-			/>
-			<Route
-				path="/"
-				element={
-					isAuthenticated ? (
-						<DashboardLayout />
-					) : (
-						<Navigate to="/login" replace />
-					)
-				}
-			>
-				<Route path="users" element={<UsersPage />} />
-				<Route path="roles" element={<RolesPage />} />
-			</Route>
-		</Routes>
-	);
+  return (
+    <Routes>
+      {/* Nếu đã login → redirect khỏi trang login */}
+      <Route
+        path="/login"
+        element={user ? <Navigate to="/" replace /> : <LoginPage />}
+      />
+
+      {/* Bọc layout bằng RequireAuth để kiểm tra token + user */}
+      <Route
+        path="/"
+        element={
+          <RequireAuth>
+            <DashboardLayout />
+          </RequireAuth>
+        }
+      >
+        <Route index element={<DashboardPage />} />
+        <Route path="users" element={<UsersPage />} />
+        <Route path="roles" element={<RolesPage />} />
+      </Route>
+    </Routes>
+  );
 }
 
 export default App;

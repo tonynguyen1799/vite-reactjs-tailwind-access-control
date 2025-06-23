@@ -1,6 +1,3 @@
-// This file is based on the schemas in your APIs.yaml
-
-// ============== AUTH ==============
 export interface LoginRequest {
 	username: string;
 	password: string;
@@ -13,7 +10,6 @@ export interface AuthTokens {
 	type: string;
 }
 
-// THIS IS THE NEWLY ADDED EXPORT
 export interface JsonResponseAuthTokens {
 	code: number;
 	message: string;
@@ -30,7 +26,6 @@ export interface RefreshTokenRequest {
 	refreshToken: string;
 }
 
-// ============== USER ==============
 export interface UserDetailResponse {
 	textId: string;
 	username: string;
@@ -63,7 +58,6 @@ export interface UpdateUserStatusRequest {
 	enabled: boolean;
 }
 
-// ============== ROLE & PRIVILEGE ==============
 export interface PrivilegeResponse {
 	name: string;
 	description: string;

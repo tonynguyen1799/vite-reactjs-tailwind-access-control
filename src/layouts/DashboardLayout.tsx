@@ -2,13 +2,15 @@
 import { useEffect, useState, Fragment } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, Transition } from '@headlessui/react';
-import { FiUsers, FiShield, FiChevronDown, FiMenu } from 'react-icons/fi';
-import { useAuth } from '../contexts/AuthContext';
+import { HiOutlineLogout, HiOutlineHome, HiOutlineUsers, HiOutlineShieldCheck, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
+import { FiChevronDown, FiMenu } from 'react-icons/fi';
+import { useAuth } from '../contexts/useAuth';
 import { useMediaQuery } from 'react-responsive';
 
 const navLinks = [
-	{ to: '/users', label: 'Users', icon: <FiUsers /> },
-	{ to: '/roles', label: 'Roles', icon: <FiShield /> },
+	{ to: '/', label: 'Dashboard', icon: <HiOutlineHome className="w-5 h-5" /> },
+	{ to: '/users', label: 'Users', icon: <HiOutlineUsers className="w-5 h-5" /> },
+	{ to: '/roles', label: 'Roles', icon: <HiOutlineShieldCheck className="w-5 h-5" /> },
 ];
 
 export default function DashboardLayout() {
@@ -93,7 +95,11 @@ export default function DashboardLayout() {
 								onClick={() => setSidebarCollapsed((prev) => !prev)}
 								className="inline-flex items-center justify-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 transition-all"
 							>
-								<span className="text-lg">{sidebarCollapsed ? '→' : '←'}</span>
+								{sidebarCollapsed ? (
+									<HiChevronDoubleRight className="w-5 h-5" />
+								) : (
+									<HiChevronDoubleLeft className="w-5 h-5" />
+								)}
 								{!sidebarCollapsed && <span>Collapse</span>}
 							</button>
 						</div>
@@ -141,8 +147,9 @@ export default function DashboardLayout() {
 										{({ active }) => (
 											<button
 												onClick={handleLogout}
-												className={`${active ? 'bg-gray-100' : ''} w-full text-left px-4 py-2 text-sm text-gray-700`}
+												className={`${active ? 'bg-gray-100' : ''} w-full text-left px-4 py-2 text-sm text-gray-700 flex items-center gap-2`}
 											>
+												<HiOutlineLogout className="w-4 h-4" />
 												Logout
 											</button>
 										)}

@@ -1,18 +1,25 @@
 import http from '../utils/http';
-// By adding "type", we fix the error.
 import type {
 	LoginRequest,
-	JsonResponseAuthTokens,
-	UserDetailResponse,
-} from './types';
+	JsonResponseAuthTokens
+  } from './types';
 
 export const loginApi = (data: LoginRequest) => {
-	return http.post<JsonResponseAuthTokens>('/api/auth/signin', data);
+	return http.post<JsonResponseAuthTokens>('/api/auth/signin', data, { skipAuthRefresh: true });
 };
 
 export const getMeApi = () => {
-	// Assuming a generic JsonResponse wrapper from your YAML for the 'me' endpoint
-	return http.get<{ code: number; message: string; data: UserDetailResponse }>(
-		'/api/auth/me'
-	);
+  return http.get('/api/auth/me');
+};
+
+export const changePasswordApi = (data: {
+  currentPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}) => {
+  return http.post('/api/auth/change-password', data);
+};
+
+export const refreshTokenApi = (refreshToken: string) => {
+  return http.post('/api/auth/refresh', { refreshToken });
 };

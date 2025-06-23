@@ -1,5 +1,6 @@
 // src/contexts/NotificationContext.tsx
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState } from 'react';
+import type { ReactNode } from 'react';
 
 interface Notification {
 	id: number;
@@ -14,6 +15,15 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 let idCounter = 0;
+let globalNotifyFn: ((message: string, type?: 'success' | 'error' | 'info') => void) | null = null;
+
+export const setGlobalNotifier = (fn: typeof globalNotifyFn) => {
+	globalNotifyFn = fn;
+};
+
+export const globalNotify = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
+	if (globalNotifyFn) globalNotifyFn(message, type);
+};
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 	const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -25,6 +35,9 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 			setNotifications((prev) => prev.filter((n) => n.id !== id));
 		}, 3000);
 	};
+
+	// Wire up the global notifier
+	if (!globalNotifyFn) setGlobalNotifier(notify);
 
 	return (
 		<NotificationContext.Provider value={{ notify }}>

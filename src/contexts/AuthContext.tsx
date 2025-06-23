@@ -1,91 +1,79 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { createContext, useEffect, useState } from 'react';
 import { loginApi, getMeApi } from '../apis/auth.api';
+import type { LoginRequest, UserDetailResponse } from '../apis/types';
 
-// A more detailed user type based on your APIs.yaml
-type User = {
-	textId: string;
-	username: string;
-	email: string;
-	enabled: boolean;
-	roles: string[];
-};
+interface AuthContextType {
+  token: string | null;
+  user: UserDetailResponse | null;
+  setUser: (user: UserDetailResponse | null) => void;
+  login: (username: string, password: string, rememberMe: boolean) => Promise<boolean>;
+  logout: () => void;
+}
 
-type AuthContextType = {
-	isAuthenticated: boolean;
-	user: User | null;
-	login: (username: string, password: string) => Promise<boolean>;
-	logout: () => void;
-	loading: boolean; // To handle loading state
-};
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<UserDetailResponse | null>(null);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
-	const [isAuthenticated, setIsAuthenticated] = useState(false);
-	const [user, setUser] = useState<User | null>(null);
-	const [loading, setLoading] = useState(true); // Start with loading true to check for existing session
+  useEffect(() => {
+    const storedToken = localStorage.getItem('token') || sessionStorage.getItem('token');
+    if (storedToken) {
+      setToken(storedToken);
 
-	useEffect(() => {
-		const checkUserSession = async () => {
-			const token = localStorage.getItem('token');
-			if (token && token !== 'undefined') {
-				try {
-					const response = await getMeApi();
-					setUser(response.data.data);
-					setIsAuthenticated(true);
-				} catch (error) {
-					console.error('Session check failed', error);
-					// Token is invalid, so log out
-					localStorage.removeItem('token');
-					localStorage.removeItem('refreshToken');
-				}
-			}
-			setLoading(false);
-		};
+      // ✅ Gọi lại API /me sau F5
+      getMeApi()
+        .then((res) => {
+          setUser(res.data.data);
+        })
+        .catch(() => {
+          // Token sai → xóa và logout
+          localStorage.removeItem('token');
+          sessionStorage.removeItem('token');
+          setToken(null);
+          setUser(null);
+        });
+    }
+  }, []);
 
-		checkUserSession();
-	}, []);
+  const login = async (username: string, password: string, rememberMe: boolean) => {
+    try {
+      const payload: LoginRequest = { username, password, rememberMe };
+      const response = await loginApi(payload);
+      const { token, refreshToken } = response.data?.data || {};
 
-	const login = async (username: string, password: string) => {
-		try {
-			const response = await loginApi({ username, password });
-			const { token, refreshToken } = response.data.data;
+      if (token && refreshToken) {
+        const storage = rememberMe ? localStorage : sessionStorage;
+        storage.setItem('token', token);
+        storage.setItem('refreshToken', refreshToken);
+        setToken(token);
 
-			localStorage.setItem('token', token);
-			localStorage.setItem('refreshToken', refreshToken);
+        const getMeResponse = await getMeApi();
+        setUser(getMeResponse.data.data);
+        console.log('[AuthContext] User set in context after login:', getMeResponse.data.data);
 
-			// Fetch user info after login
-			const meResponse = await getMeApi();
-			setUser(meResponse.data.data);
-			setIsAuthenticated(true);
-			return true;
-		} catch (error) {
-			console.error('Login failed:', error);
-			// Clear any partial login artifacts
-			localStorage.removeItem('token');
-			localStorage.removeItem('refreshToken');
-			setIsAuthenticated(false);
-			setUser(null);
-			return false;
-		}
-	};
+        return true;
+      }
 
-	const logout = () => {
-		localStorage.removeItem('token');
-		localStorage.removeItem('refreshToken');
-		setIsAuthenticated(false);
-		setUser(null);
-	};
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    }
+  };
 
-	return (
-		<AuthContext.Provider value={{ isAuthenticated, user, login, logout, loading }}>
-			{children}
-		</AuthContext.Provider>
-	);
-};
+  const logout = () => {
+    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    sessionStorage.removeItem('refreshToken');
+    setToken(null);
+    setUser(null);
+  };
 
-export const useAuth = () => {
-	const context = useContext(AuthContext);
-	if (!context) throw new Error('useAuth must be used within an AuthProvider');
-	return context;
+  return (
+    <AuthContext.Provider value={{ token, user, setUser, login, logout }}>
+      {children}
+    </AuthContext.Provider>
+  );
 };
