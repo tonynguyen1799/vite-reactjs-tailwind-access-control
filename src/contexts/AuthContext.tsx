@@ -1,6 +1,7 @@
 import { createContext, useEffect, useState } from 'react';
 import { loginApi, getMeApi } from '../apis/auth.api';
 import type { LoginRequest, UserDetailResponse } from '../apis/types';
+import { globalNotify } from '@/lib/notify';
 
 interface AuthContextType {
   token: string | null;
@@ -20,14 +21,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const storedToken = localStorage.getItem('token') || sessionStorage.getItem('token');
     if (storedToken) {
       setToken(storedToken);
-
-      // ✅ Gọi lại API /me sau F5
       getMeApi()
         .then((res) => {
           setUser(res.data.data);
         })
         .catch(() => {
-          // Token sai → xóa và logout
           localStorage.removeItem('token');
           sessionStorage.removeItem('token');
           setToken(null);
@@ -50,14 +48,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         const getMeResponse = await getMeApi();
         setUser(getMeResponse.data.data);
-        console.log('[AuthContext] User set in context after login:', getMeResponse.data.data);
-
         return true;
       }
-
+      
+      globalNotify({
+        variant: "destructive",
+        title: "Login Failed",
+        description: "Invalid credentials or server error.",
+      });
       return false;
     } catch (error) {
-      console.error('Login error:', error);
+      globalNotify({
+        variant: "destructive",
+        title: "Login Failed",
+        description: "Invalid credentials or server error.",
+      });
       return false;
     }
   };

@@ -1,11 +1,8 @@
+// src/utils/http.ts
 import axios from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 import { refreshTokenIfNeeded } from './refresh';
-// Notification helper for outside React components
-let notifySessionExpired: (() => void) | null = null;
-export const setNotifySessionExpired = (fn: () => void) => {
-  notifySessionExpired = fn;
-};
+import { globalNotify } from '@/lib/notify';
 
 const http = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080',
@@ -26,7 +23,6 @@ http.interceptors.response.use(
     const originalRequest = error.config;
     const status = error.response?.status;
 
-    // 🔐 Retry logic for expired token (skip if flagged explicitly)
     if (status === 401 && !originalRequest._retry && !originalRequest.skipAuthRefresh) {
       originalRequest._retry = true;
 
@@ -42,13 +38,20 @@ http.interceptors.response.use(
         }
       } catch (refreshError) {
         console.error('[http] Refresh token failed', refreshError);
-        // Inline logout logic
         localStorage.removeItem('token');
         sessionStorage.removeItem('token');
         localStorage.removeItem('refreshToken');
         sessionStorage.removeItem('refreshToken');
-        if (notifySessionExpired) notifySessionExpired();
-        window.location.href = '/';
+        
+        globalNotify({
+          variant: "destructive",
+          title: "Session Expired",
+          description: "Your session has expired. Please log in again.",
+        });
+
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 100);
       }
     }
 

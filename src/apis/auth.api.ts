@@ -1,25 +1,38 @@
 import http from '../utils/http';
+import type { AxiosRequestConfig } from 'axios';
 import type {
 	LoginRequest,
-	JsonResponseAuthTokens
-  } from './types';
+	AuthTokens,
+	UserDetailResponse,
+	ApiResponse,
+    RefreshTokenRequest,
+} from './types';
+
+interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
+    skipAuthRefresh?: boolean;
+}
 
 export const loginApi = (data: LoginRequest) => {
-	return http.post<JsonResponseAuthTokens>('/api/auth/signin', data, { skipAuthRefresh: true });
+	const payload: LoginRequest = {
+		username: data.username,
+		password: data.password,
+		rememberMe: data.rememberMe,
+	};
+    // Use the extended config type for this request
+	const config: ExtendedAxiosRequestConfig = { skipAuthRefresh: true };
+	return http.post<ApiResponse<AuthTokens>>('/api/auth/signin', payload, config);
+};
+
+export const refreshTokenApi = (data: RefreshTokenRequest) => {
+    // Use the extended config type for this request
+    const config: ExtendedAxiosRequestConfig = { skipAuthRefresh: true };
+	return http.post<ApiResponse<AuthTokens>>(
+		'/api/auth/refresh',
+		data,
+		config
+	);
 };
 
 export const getMeApi = () => {
-  return http.get('/api/auth/me');
-};
-
-export const changePasswordApi = (data: {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}) => {
-  return http.post('/api/auth/change-password', data);
-};
-
-export const refreshTokenApi = (refreshToken: string) => {
-  return http.post('/api/auth/refresh', { refreshToken });
+	return http.get<ApiResponse<UserDetailResponse>>('/api/auth/me');
 };

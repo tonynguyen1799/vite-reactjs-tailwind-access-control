@@ -36,8 +36,6 @@ export default function RequireAuth({ children }: { children: React.ReactNode })
     return () => { isMounted = false; };
   }, [token, setUser, user]);    
 
-  console.log('[RequireAuth] user:', user, 'token:', token, 'loading:', loading);
-
   if (loading) {
     return (
       <div className="h-screen flex flex-col justify-center items-center">

@@ -1,169 +1,207 @@
-// src/layouts/DashboardLayout.tsx
-import { useEffect, useState, Fragment } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Menu, Transition } from '@headlessui/react';
-import { HiOutlineLogout, HiOutlineHome, HiOutlineUsers, HiOutlineShieldCheck, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
-import { FiChevronDown, FiMenu } from 'react-icons/fi';
+import { HiOutlineHome, HiOutlineUsers, HiOutlineShieldCheck, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
+import { FiMenu } from 'react-icons/fi';
+import { LogOut, User } from 'lucide-react';
+
 import { useAuth } from '../contexts/useAuth';
 import { useMediaQuery } from 'react-responsive';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { cn } from '@/lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 const navLinks = [
-	{ to: '/', label: 'Dashboard', icon: <HiOutlineHome className="w-5 h-5" /> },
-	{ to: '/users', label: 'Users', icon: <HiOutlineUsers className="w-5 h-5" /> },
-	{ to: '/roles', label: 'Roles', icon: <HiOutlineShieldCheck className="w-5 h-5" /> },
+    { to: '/', label: 'Dashboard', icon: <HiOutlineHome className="w-5 h-5" /> },
+    { to: '/users', label: 'Users', icon: <HiOutlineUsers className="w-5 h-5" /> },
+    { to: '/roles', label: 'Roles', icon: <HiOutlineShieldCheck className="w-5 h-5" /> },
 ];
 
 export default function DashboardLayout() {
-	const location = useLocation();
-	const navigate = useNavigate();
-	const { logout } = useAuth();
+    const location = useLocation();
+    const navigate = useNavigate();
+    const { user, logout } = useAuth();
 
-	const isDesktop = useMediaQuery({ minWidth: 1024 });
-	const [sidebarOpen, setSidebarOpen] = useState(false);
-	const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const isDesktop = useMediaQuery({ minWidth: 1024 });
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
-	useEffect(() => {
-		if (!isDesktop) setSidebarCollapsed(false);
-	}, [isDesktop]);
+    useEffect(() => {
+        if (!isDesktop) setSidebarCollapsed(false);
+    }, [isDesktop]);
 
-	useEffect(() => {
-		setSidebarOpen(false);
-		document.body.classList.remove('overflow-hidden');
-	}, [location.pathname]);
+    useEffect(() => {
+        setSidebarOpen(false);
+        document.body.classList.remove('overflow-hidden');
+    }, [location.pathname]);
 
-	const handleLogout = () => {
-		logout();
-		navigate('/login');
-	};
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
-	return (
-		<div className="flex h-screen bg-gray-100 overflow-hidden">
-			{/* Mobile overlay */}
-			<div
-				className={`fixed inset-0 z-40 bg-black bg-opacity-30 lg:hidden transition-opacity ${
-					sidebarOpen ? 'opacity-100 visible backdrop-blur-sm' : 'opacity-0 invisible'
-				}`}
-				onClick={() => {
-					const sidebar = document.querySelector('aside');
-					if (sidebar) {
-						sidebar.classList.remove('animate-slideIn');
-						sidebar.classList.add('animate-slideOut');
-					}
-					setTimeout(() => {
-						document.body.classList.remove('overflow-hidden');
-						setSidebarOpen(false);
-					}, 150);
-				}}
-			/>
+    const userFullName = user?.profile ? `${user.profile.firstName} ${user.profile.lastName}` : user?.username;
+    const userAvatarFallback = user?.profile?.firstName ? user.profile.firstName.charAt(0) : user?.username.charAt(0).toUpperCase();
 
-			{/* Sidebar */}
-			<aside
-				className={`fixed md:relative z-50 ${sidebarCollapsed ? 'md:w-20' : 'md:w-64'} w-64 bg-white flex flex-col p-4 h-full md:h-screen inset-y-0 transform transition-transform duration-300 ease-in-out ${
-					sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-				} md:translate-x-0`}
-			>
-				<div className="flex flex-col items-center justify-center mb-6">
-					{/* Logo placeholder */}
-				</div>
+    return (
+        <div className="flex h-screen bg-muted/40 overflow-hidden">
+            {/* Mobile overlay */}
+            <div
+                className={`fixed inset-0 z-40 bg-black bg-opacity-30 lg:hidden transition-opacity ${
+                    sidebarOpen ? 'opacity-100 visible backdrop-blur-sm' : 'opacity-0 invisible'
+                }`}
+                onClick={() => {
+                    const sidebar = document.querySelector('aside');
+                    if (sidebar) {
+                        sidebar.classList.remove('animate-slideIn');
+                        sidebar.classList.add('animate-slideOut');
+                    }
+                    setTimeout(() => {
+                        document.body.classList.remove('overflow-hidden');
+                        setSidebarOpen(false);
+                    }, 150);
+                }}
+            />
 
-				<nav className="flex-1 space-y-2 relative">
-					{navLinks.map((link) => (
-						<div key={link.to} className="relative group">
-							<Link
-								to={link.to}
-								title={sidebarCollapsed ? link.label : ''}
-								className={`flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium transition-colors duration-200 ease-in-out hover:bg-gray-100 hover:text-blue-600 ${
-									location.pathname === link.to
-										? 'bg-blue-100 text-blue-700'
-										: 'text-gray-700'
-								}`}
-							>
-								<span>{link.icon}</span>
-								{!sidebarCollapsed && <span>{link.label}</span>}
-							</Link>
-							{sidebarCollapsed && (
-								<span className="absolute top-1/2 left-full ml-2 px-2 py-1 rounded bg-gray-800 text-white text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 transform -translate-y-1/2 transition-opacity">
-									{link.label}
-								</span>
-							)}
-						</div>
-					))}
+            {/* Sidebar */}
+            <aside
+                className={cn(
+                    "fixed md:relative z-50 bg-background flex flex-col p-4 h-full md:h-screen inset-y-0 transform transition-all duration-300 ease-in-out border-r border-border",
+                    sidebarCollapsed ? 'md:w-20' : 'md:w-64',
+                    "w-72", 
+                    sidebarOpen ? 'translate-x-0' : '-translate-x-full',
+                    "md:translate-x-0"
+                )}
+            >
+                <div className="flex flex-col items-center justify-center mb-6 h-14">
+                    {/* Logo placeholder */}
+                </div>
 
-					{isDesktop && (
-						<div className="absolute bottom-4 left-0 w-full text-center">
-							<button
-								onClick={() => setSidebarCollapsed((prev) => !prev)}
-								className="inline-flex items-center justify-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 transition-all"
-							>
-								{sidebarCollapsed ? (
-									<HiChevronDoubleRight className="w-5 h-5" />
-								) : (
-									<HiChevronDoubleLeft className="w-5 h-5" />
-								)}
-								{!sidebarCollapsed && <span>Collapse</span>}
-							</button>
-						</div>
-					)}
-				</nav>
-			</aside>
+                <TooltipProvider delayDuration={100}>
+                    <nav className="flex-1 space-y-2 relative">
+                        {navLinks.map((link) => (
+                            <Tooltip key={link.to}>
+                                <TooltipTrigger asChild>
+                                    <Link
+                                        to={link.to}
+                                        className={cn(
+                                            "group flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted/50",
+                                            location.pathname === link.to && "bg-muted text-primary"
+                                        )}
+                                    >
+                                        <span className="h-5 w-5">{link.icon}</span>
+                                        {!sidebarCollapsed && (
+                                            <span className={cn(
+                                                "text-sm",
+                                                location.pathname === link.to
+                                                    ? "font-semibold text-primary"
+                                                    : isDesktop
+                                                        ? "font-normal group-hover:font-semibold"
+                                                        : "font-semibold"
+                                            )}>
+                                                {link.label}
+                                            </span>
+                                        )}
+                                        <span className="sr-only">{link.label}</span>
+                                    </Link>
+                                </TooltipTrigger>
+                                {sidebarCollapsed && (
+                                    <TooltipContent side="right">
+                                        {link.label}
+                                    </TooltipContent>
+                                )}
+                            </Tooltip>
+                        ))}
 
-			{/* Main content */}
-			<div className="flex-1 flex flex-col">
-				<header className="h-16 px-4 md:px-6 bg-white border-b flex items-center justify-between">
-					<div className="flex items-center gap-4">
-						<button
-							onClick={() => {
-								const sidebar = document.querySelector('aside');
-								if (sidebar) {
-									sidebar.classList.remove('animate-slideOut');
-									sidebar.classList.add('animate-slideIn');
-								}
-								document.body.classList.add('overflow-hidden');
-								setSidebarOpen(true);
-							}}
-							className="md:hidden text-gray-600 p-1"
-							aria-label="Toggle sidebar"
-						>
-							<FiMenu className="w-4 h-4" />
-						</button>
-					</div>
-					<Menu as="div" className="relative inline-block text-left">
-						<Menu.Button className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium bg-gray-100 rounded-md hover:bg-gray-200">
-							<img src="/avatar.png" alt="User avatar" className="w-6 h-6 rounded-full" />
-							Admin <FiChevronDown className="w-4 h-4" />
-						</Menu.Button>
-						<Transition
-							as={Fragment}
-							enter="transition ease-out duration-100"
-							enterFrom="transform opacity-0 scale-95"
-							enterTo="transform opacity-100 scale-100"
-							leave="transition ease-in duration-75"
-							leaveFrom="transform opacity-100 scale-100"
-							leaveTo="transform opacity-0 scale-95"
-						>
-							<Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right bg-white border rounded-md shadow-lg focus:outline-none z-50">
-								<div className="py-1">
-									<Menu.Item>
-										{({ active }) => (
-											<button
-												onClick={handleLogout}
-												className={`${active ? 'bg-gray-100' : ''} w-full text-left px-4 py-2 text-sm text-gray-700 flex items-center gap-2`}
-											>
-												<HiOutlineLogout className="w-4 h-4" />
-												Logout
-											</button>
-										)}
-									</Menu.Item>
-								</div>
-							</Menu.Items>
-						</Transition>
-					</Menu>
-				</header>
+                        {isDesktop && (
+                            <div className="absolute bottom-4 left-0 w-full flex justify-center">
+                                <Button
+                                    onClick={() => setSidebarCollapsed((prev) => !prev)}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="gap-2"
+                                >
+                                    {sidebarCollapsed ? (
+                                        <HiChevronDoubleRight className="w-5 h-5" />
+                                    ) : (
+                                        <HiChevronDoubleLeft className="w-5 h-5" />
+                                    )}
+                                    {!sidebarCollapsed && <span className="text-xs">Collapse</span>}
+                                </Button>
+                            </div>
+                        )}
+                    </nav>
+                </TooltipProvider>
+            </aside>
 
-				<main className="flex-1 p-4 md:p-6 overflow-auto">
-					<Outlet />
-				</main>
-			</div>
-		</div>
-	);
+            {/* Main content */}
+            <div className="flex-1 flex flex-col">
+                <header className="h-16 px-4 md:px-6 bg-background border-b border-border flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                                const sidebar = document.querySelector('aside');
+                                if (sidebar) {
+                                    sidebar.classList.remove('animate-slideOut');
+                                    sidebar.classList.add('animate-slideIn');
+                                }
+                                document.body.classList.add('overflow-hidden');
+                                setSidebarOpen(true);
+                            }}
+                            className="md:hidden"
+                            aria-label="Toggle sidebar"
+                        >
+                            <FiMenu className="w-4 h-5" />
+                        </Button>
+                    </div>
+
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="relative h-8 w-8 rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                                <Avatar className="h-8 w-8">
+                                    <AvatarImage src={user?.profile?.avatarUrl || ''} alt={user?.username} />
+                                    <AvatarFallback>{userAvatarFallback}</AvatarFallback>
+                                </Avatar>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56 shadow-xl" align="end" forceMount>
+                            <DropdownMenuLabel className="font-normal">
+                            <div className="flex flex-col space-y-1">
+                                <p className="text-sm font-medium leading-none">{userFullName}</p>
+                                <p className="text-xs leading-none text-muted-foreground">
+                                {user?.email}
+                                </p>
+                            </div>
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="cursor-pointer">
+                                <User className="mr-2 h-4 w-4" />
+                                <span>Profile</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                                <LogOut className="mr-2 h-4 w-4" />
+                                <span>Log out</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                </header>
+
+                <main className="flex-1 p-4 md:p-6 overflow-auto">
+                    <Outlet />
+                </main>
+            </div>
+        </div>
+    );
 }
