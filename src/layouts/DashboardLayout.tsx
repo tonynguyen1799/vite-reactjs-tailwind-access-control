@@ -18,22 +18,27 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
+import { usePermissions } from '@/contexts/usePermissions';
 
 const navLinks = [
-    { to: '/', label: 'Dashboard', icon: <HiOutlineHome className="w-5 h-5" /> },
-    { to: '/users', label: 'Users', icon: <HiOutlineUsers className="w-5 h-5" /> },
-    { to: '/roles', label: 'Roles', icon: <HiOutlineShieldCheck className="w-5 h-5" /> },
+    { to: '/', label: 'Dashboard', icon: <HiOutlineHome className="w-5 h-5" />, requiredPrivileges: [] },
+    { to: '/users', label: 'Users', icon: <HiOutlineUsers className="w-5 h-5" />, requiredPrivileges: ['USER_MANAGEMENT_READ'] },
+    { to: '/roles', label: 'Roles', icon: <HiOutlineShieldCheck className="w-5 h-5" />, requiredPrivileges: ['ROLE_MANAGEMENT_READ'] },
 ];
 
 export default function DashboardLayout() {
     const location = useLocation();
     const navigate = useNavigate();
     const { user, logout } = useAuth();
+    const { hasPrivilege } = usePermissions();
 
     const isDesktop = useMediaQuery({ minWidth: 1024 });
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    
+    const accessibleNavLinks = navLinks.filter(link =>
+        link.requiredPrivileges.length === 0 || link.requiredPrivileges.some(privilege => hasPrivilege(privilege))
+    );
 
     useEffect(() => {
         if (!isDesktop) setSidebarCollapsed(false);
@@ -75,7 +80,7 @@ export default function DashboardLayout() {
             {/* Sidebar */}
             <aside
                 className={cn(
-                    "fixed md:relative z-50 bg-background flex flex-col p-4 h-full md:h-screen inset-y-0 transform transition-all duration-300 ease-in-out border-r border-border",
+                    "fixed md:relative z-50 bg-muted flex flex-col p-4 h-full md:h-screen inset-y-0 transform transition-all duration-300 ease-in-out",
                     sidebarCollapsed ? 'md:w-20' : 'md:w-64',
                     "w-72", 
                     sidebarOpen ? 'translate-x-0' : '-translate-x-full',
@@ -88,14 +93,14 @@ export default function DashboardLayout() {
 
                 <TooltipProvider delayDuration={100}>
                     <nav className="flex-1 space-y-2 relative">
-                        {navLinks.map((link) => (
+                        {accessibleNavLinks.map((link) => (
                             <Tooltip key={link.to}>
                                 <TooltipTrigger asChild>
                                     <Link
                                         to={link.to}
                                         className={cn(
-                                            "group flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-muted/50",
-                                            location.pathname === link.to && "bg-muted text-primary"
+                                            "group flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-slate-100 dark:hover:bg-slate-800",
+                                            location.pathname === link.to && "bg-slate-200 dark:bg-slate-800 text-primary"
                                         )}
                                     >
                                         <span className="h-5 w-5">{link.icon}</span>
@@ -145,7 +150,7 @@ export default function DashboardLayout() {
 
             {/* Main content */}
             <div className="flex-1 flex flex-col">
-                <header className="h-16 px-4 md:px-6 bg-background border-b border-border flex items-center justify-between">
+                <header className="h-16 px-4 md:px-6 bg-background flex items-center justify-between">
                     <div className="flex items-center gap-4">
                         <Button
                             variant="ghost"
@@ -166,36 +171,51 @@ export default function DashboardLayout() {
                         </Button>
                     </div>
 
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="relative h-8 w-8 rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
-                                <Avatar className="h-8 w-8">
-                                    <AvatarImage src={user?.profile?.avatarUrl || ''} alt={user?.username} />
-                                    <AvatarFallback>{userAvatarFallback}</AvatarFallback>
-                                </Avatar>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56 shadow-xl" align="end" forceMount>
-                            <DropdownMenuLabel className="font-normal">
-                            <div className="flex flex-col space-y-1">
-                                <p className="text-sm font-medium leading-none">{userFullName}</p>
-                                <p className="text-xs leading-none text-muted-foreground">
-                                {user?.email}
-                                </p>
-                            </div>
-                            </DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem className="cursor-pointer">
-                                <User className="mr-2 h-4 w-4" />
-                                <span>Profile</span>
+                    <div className="flex items-center gap-2">
+                        <DropdownMenu>
+                            <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => {}}>
+                                Zinc
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-                                <LogOut className="mr-2 h-4 w-4" />
-                                <span>Log out</span>
+                            <DropdownMenuItem onClick={() => {}}>
+                                Blue
                             </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                            <DropdownMenuItem onClick={() => {}}>
+                                Green
+                            </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
 
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="relative h-8 w-8 rounded-full focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarImage src={user?.profile?.avatarUrl || ''} alt={user?.username} />
+                                        <AvatarFallback>{userAvatarFallback}</AvatarFallback>
+                                    </Avatar>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-56 shadow-xl" align="end" forceMount>
+                                <DropdownMenuLabel className="font-normal">
+                                <div className="flex flex-col space-y-1">
+                                    <p className="text-sm font-medium leading-none">{userFullName}</p>
+                                    <p className="text-xs leading-none text-muted-foreground">
+                                    {user?.email}
+                                    </p>
+                                </div>
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/profile')}>
+                                    <User className="mr-2 h-4 w-4" />
+                                    <span>Profile</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
+                                    <LogOut className="mr-2 h-4 w-4" />
+                                    <span>Log out</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                 </header>
 
                 <main className="flex-1 p-4 md:p-6 overflow-auto">

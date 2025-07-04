@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -24,100 +24,188 @@ import {
 import { Input } from "@/components/ui/input"
 import { Switch } from "@/components/ui/switch"
 import { Role, User } from "@/apis/types"
-import { updateUserApi } from "@/apis/user.api"
+import { createUserApi, updateUserApi } from "@/apis/user.api"
 import { globalNotify } from "@/lib/notify"
 import { Loader2, Check, ChevronsUpDown } from "lucide-react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
-import { Label } from "@/components/ui/label" // This import was missing
+import { Label } from "@/components/ui/label"
 
-// Validation schema for the edit form
-const formSchema = z.object({
+// Base schema for fields that are always present
+const baseSchema = z.object({
   enabled: z.boolean(),
   roleTextIds: z.array(z.string()).min(1, { message: "You must select at least one role." }),
-})
+});
 
-interface EditUserSheetProps {
-  userToEdit: User | null
+// Schema for creating a new user (includes username and email)
+const addUserSchema = baseSchema.extend({
+    username: z.string().min(2, { message: "Username must be at least 2 characters." }),
+    email: z.string().email({ message: "Please enter a valid email." }),
+});
+
+// The final schema type
+type FormValues = z.infer<typeof addUserSchema>;
+
+interface UserSheetProps {
+  initialData: User | null // If null, it's in "add" mode. Otherwise, "edit" mode.
   isOpen: boolean
   onOpenChange: (isOpen: boolean) => void
-  onUserUpdated: () => void
+  onSuccess: () => void
   roles: Role[]
 }
 
-export function EditUserSheet({ userToEdit, isOpen, onOpenChange, onUserUpdated, roles }: EditUserSheetProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false)
+const formatDate = (timestamp?: number) => {
+    if (!timestamp) return '-';
+    return new Intl.DateTimeFormat('en-US', {
+        dateStyle: 'long',
+        timeStyle: 'short',
+    }).format(new Date(timestamp));
+}
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+export function UserSheet({ initialData, isOpen, onOpenChange, onSuccess, roles }: UserSheetProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const usernameInputRef = useRef<HTMLInputElement>(null);
+
+  const isEditMode = !!initialData;
+
+  const form = useForm<FormValues>({
+    // Use the appropriate schema based on the mode
+    resolver: zodResolver(isEditMode ? baseSchema : addUserSchema),
     defaultValues: {
+      username: "",
+      email: "",
       enabled: true,
       roleTextIds: [],
     },
   })
 
-  // Pre-populate the form when a user is selected for editing
+  // Pre-populate the form when in edit mode
   useEffect(() => {
-    if (userToEdit) {
+    if (isEditMode && initialData) {
       const userRoleIds = roles
-        .filter(role => userToEdit.roles.includes(role.name))
+        .filter(role => initialData.roles.includes(role.name))
         .map(role => role.textId);
-        
+
       form.reset({
-        enabled: userToEdit.enabled,
+        username: initialData.username,
+        email: initialData.email,
+        enabled: initialData.enabled,
         roleTextIds: userRoleIds,
       })
+    } else {
+      // Reset to default when in "add" mode or when sheet closes
+      form.reset({
+        username: "",
+        email: "",
+        enabled: true,
+        roleTextIds: [],
+      });
     }
-  }, [userToEdit, form, roles])
+  }, [initialData, isOpen, form, roles, isEditMode]);
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!userToEdit) return;
+  // Focus username input on open in "add" mode
+  useEffect(() => {
+    if (isOpen && !isEditMode) {
+      setTimeout(() => {
+        usernameInputRef.current?.focus();
+      }, 100); // Small delay to ensure the input is rendered and focusable after the sheet animation
+    }
+  }, [isOpen, isEditMode]);
 
+  async function onSubmit(values: FormValues) {
     setIsSubmitting(true)
     try {
-      await updateUserApi(userToEdit.textId, values)
-      globalNotify({
-        title: "Success",
-        description: "User updated successfully.",
-      })
-      onUserUpdated()
-      onOpenChange(false)
+      if (isEditMode && initialData) {
+        // Update existing user
+        const { enabled, roleTextIds } = values;
+        await updateUserApi(initialData.textId, { enabled, roleTextIds });
+        globalNotify({ title: "Success", description: "User updated successfully." });
+      } else {
+        // Create new user
+        await createUserApi(values);
+        globalNotify({ title: "Success", description: "User created successfully." });
+      }
+      onSuccess() // Trigger refetch on the parent page
+      onOpenChange(false) // Close the sheet
     } catch (error) {
-      console.error("Failed to update user:", error)
+      console.error("Failed to save user:", error)
       globalNotify({
         variant: "destructive",
-        title: "Update Failed",
-        description: "Could not update the user.",
+        title: "Save Failed",
+        description: "Could not save the user.",
       })
     } finally {
       setIsSubmitting(false)
     }
   }
-  
+
   const selectedRoles = roles.filter(role => form.watch('roleTextIds').includes(role.textId));
 
   return (
     <Sheet open={isOpen} onOpenChange={onOpenChange}>
       <SheetContent className="overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Edit User</SheetTitle>
+          <SheetTitle>{isEditMode ? "Edit User" : "Add New User"}</SheetTitle>
           <SheetDescription>
-            Update the user's details and roles.
+            {isEditMode ? "Update the user's details and roles." : "Fill in the details below to create a new user account."}
           </SheetDescription>
         </SheetHeader>
-        <div className="py-4">
+        <div>
             <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <div className="space-y-2">
-                    <Label>Username</Label>
-                    <Input value={userToEdit?.username || ''} readOnly disabled />
-                </div>
-                 <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input value={userToEdit?.email || ''} readOnly disabled />
-                </div>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {isEditMode ? (
+                    <>
+                        <div className="space-y-2">
+                            <Label>Username</Label>
+                            <Input value={initialData?.username || ''} readOnly disabled />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Email</Label>
+                            <Input value={initialData?.email || ''} readOnly disabled />
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <FormField
+                        control={form.control}
+                        name="username"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Username <span className="text-destructive">*</span></FormLabel>
+                            <FormControl>
+                                <Input
+                                    placeholder="e.g., johndoe"
+                                    {...field}
+                                    ref={usernameInputRef}
+                                />
+                            </FormControl>
+                            <FormDescription>
+                                This will be the user's login name.
+                            </FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                        <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Email <span className="text-destructive">*</span></FormLabel>
+                            <FormControl>
+                                <Input placeholder="e.g., john.doe@example.com" {...field} />
+                            </FormControl>
+                            <FormDescription>
+                                The user will use this email for notifications.
+                            </FormDescription>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                    </>
+                )}
 
                 <FormField
                   control={form.control}
@@ -126,6 +214,9 @@ export function EditUserSheet({ userToEdit, isOpen, onOpenChange, onUserUpdated,
                     <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3">
                         <div className="space-y-0.5">
                             <FormLabel>Enable User</FormLabel>
+                            <FormDescription>
+                                Allow this user to sign in immediately.
+                            </FormDescription>
                         </div>
                         <FormControl>
                             <Switch
@@ -142,7 +233,7 @@ export function EditUserSheet({ userToEdit, isOpen, onOpenChange, onUserUpdated,
                   name="roleTextIds"
                   render={({ field }) => (
                     <FormItem className="flex flex-col">
-                        <FormLabel>Roles</FormLabel>
+                        <FormLabel>Roles <span className="text-destructive">*</span></FormLabel>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <FormControl>
@@ -203,14 +294,31 @@ export function EditUserSheet({ userToEdit, isOpen, onOpenChange, onUserUpdated,
                                 </Command>
                             </PopoverContent>
                         </Popover>
+                         <FormDescription>
+                            Assign one or more roles to this user.
+                        </FormDescription>
                         <FormMessage />
                     </FormItem>
                   )}
                 />
+
+                {isEditMode && (
+                    <div className="space-y-1 pt-2">
+                        <p className="text-xs text-muted-foreground">
+                            Created on <span className="font-medium text-foreground">{formatDate(initialData?.createdAt)}</span> by <span className="font-medium text-foreground">{initialData?.createdBy || '-'}</span>
+                        </p>
+                        {initialData?.updatedAt && (
+                        <p className="text-xs text-muted-foreground">
+                            Last updated on <span className="font-medium text-foreground">{formatDate(initialData?.updatedAt)}</span> by <span className="font-medium text-foreground">{initialData?.updatedBy || '-'}</span>
+                        </p>
+                        )}
+                    </div>
+                )}
+
                 <SheetFooter>
                     <Button type="submit" disabled={isSubmitting}>
                         {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Save Changes
+                        {isEditMode ? "Save Changes" : "Create User"}
                     </Button>
                 </SheetFooter>
             </form>

@@ -1,4 +1,3 @@
-// src/utils/http.ts
 import axios from 'axios';
 import type { AxiosRequestConfig } from 'axios';
 import { refreshTokenIfNeeded } from './refresh';

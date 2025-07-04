@@ -6,6 +6,8 @@ import type {
 	UserDetailResponse,
 	ApiResponse,
     RefreshTokenRequest,
+    UpdateUserProfileRequest,
+    ChangePasswordRequest,
 } from './types';
 
 interface ExtendedAxiosRequestConfig extends AxiosRequestConfig {
@@ -18,13 +20,11 @@ export const loginApi = (data: LoginRequest) => {
 		password: data.password,
 		rememberMe: data.rememberMe,
 	};
-    // Use the extended config type for this request
 	const config: ExtendedAxiosRequestConfig = { skipAuthRefresh: true };
 	return http.post<ApiResponse<AuthTokens>>('/api/auth/signin', payload, config);
 };
 
 export const refreshTokenApi = (data: RefreshTokenRequest) => {
-    // Use the extended config type for this request
     const config: ExtendedAxiosRequestConfig = { skipAuthRefresh: true };
 	return http.post<ApiResponse<AuthTokens>>(
 		'/api/auth/refresh',
@@ -35,4 +35,12 @@ export const refreshTokenApi = (data: RefreshTokenRequest) => {
 
 export const getMeApi = () => {
 	return http.get<ApiResponse<UserDetailResponse>>('/api/auth/me');
+};
+
+export const updateProfileApi = (data: UpdateUserProfileRequest) => {
+    return http.put<ApiResponse<UserDetailResponse>>('/api/auth/me', data);
+};
+
+export const changePasswordApi = (data: ChangePasswordRequest) => {
+    return http.post<ApiResponse<null>>('/api/auth/change-password', data);
 };

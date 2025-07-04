@@ -54,6 +54,14 @@ export interface ApiResponse<T> {
 	  timeZone: string | null;
 	  locale: string | null;
   }
+
+  // Request payload for updating a user's profile
+  export interface UpdateUserProfileRequest {
+    firstName?: string;
+    lastName?: string;
+    phoneNumber?: string;
+    address?: string;
+  }
   
   // From the /api/auth/me endpoint response
   export interface UserDetailResponse {
@@ -108,11 +116,16 @@ export interface ApiResponse<T> {
 	  name: string;
 	  description?: string;
 	  privileges: string[];
+    createdAt: number;
+    createdBy: string;
+    updatedAt?: number;
+    updatedBy?: string;
   }
   
   export interface CreateRoleRequest {
 	  name: string;
 	  description?: string;
+    privileges: string[];
   }
   
   export interface UpdateRoleRequest {
@@ -128,4 +141,3 @@ export interface ApiResponse<T> {
 	  name: string;
 	  description: string;
   }
-  
