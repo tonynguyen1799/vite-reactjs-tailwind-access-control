@@ -23,15 +23,15 @@ export default function LoginPage() {
   };
 
   // The form content is extracted to be reused in both mobile and desktop layouts
-  const renderForm = () => (
+  const renderForm = (idPrefix = "") => (
     <form onSubmit={handleSubmit} noValidate>
         <div className="grid gap-4">
           <div className="grid gap-2">
-            <Label htmlFor="username">Username</Label>
+            <Label htmlFor={`${idPrefix}username`}>Username</Label>
             <div className="relative">
               <HiOutlineUser className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                id="username"
+                id={`${idPrefix}username`}
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -42,11 +42,11 @@ export default function LoginPage() {
             </div>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor={`${idPrefix}password`}>Password</Label>
             <div className="relative">
               <HiOutlineLockClosed className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
               <Input
-                id="password"
+                id={`${idPrefix}password`}
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -66,11 +66,11 @@ export default function LoginPage() {
           </div>
           <div className="flex items-center space-x-2">
             <Checkbox
-                id="rememberMe"
+                id={`${idPrefix}rememberMe`}
                 checked={rememberMe}
                 onCheckedChange={() => setRememberMe(!rememberMe)}
               />
-              <Label htmlFor="rememberMe" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+              <Label htmlFor={`${idPrefix}rememberMe`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Remember Me
               </Label>
           </div>
@@ -96,7 +96,7 @@ export default function LoginPage() {
                 <h2 className="text-2xl font-bold">Sign In</h2>
                 <p className="text-muted-foreground">Enter your credentials to continue.</p>
             </div>
-            {renderForm()}
+            {renderForm("mobile-")}
           </div>
         </div>
       </div>
@@ -120,7 +120,7 @@ export default function LoginPage() {
                     Enter your credentials to access your dashboard
                     </p>
                 </div>
-                {renderForm()}
+                {renderForm("desktop-")}
             </div>
         </div>
       </div>

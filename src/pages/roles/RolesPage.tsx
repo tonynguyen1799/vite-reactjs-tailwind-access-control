@@ -40,7 +40,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { getRolesApi, deleteRoleApi, getPrivilegesApi } from "@/apis/role.api"
 import type { Role, Privilege } from "@/apis/types"
 import { globalNotify } from "@/lib/notify"
-import { cn } from "@/lib/utils"
 import { RoleSheet } from "@/pages/roles/RoleSheet"
 import { usePermissions } from "@/contexts/usePermissions" // Import the hook
 
@@ -121,12 +120,12 @@ export default function RolesPage() {
         await deleteRoleApi(roleToDelete.textId);
         globalNotify({ title: "Success", description: "Role deleted successfully." });
         fetchData(); // Refetch data after deletion
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("Failed to delete role:", error);
         globalNotify({
             variant: "destructive",
             title: "Delete Failed",
-            description: error.response?.data?.message || "Could not delete the role.",
+            description: error instanceof Error ? error.message : "Could not delete the role.",
         });
     } finally {
         setIsDeleteDialogOpen(false)

@@ -1,5 +1,20 @@
 export default {
     darkMode: ["class"],
+    // Add this safelist to ensure theme classes are always generated
+    safelist: [
+      'theme-zinc',
+      'theme-blue',
+      'theme-green',
+      'theme-yellow',
+      'theme-red',
+      'theme-purple',
+      'dark:theme-zinc',
+      'dark:theme-blue',
+      'dark:theme-green',
+      'dark:theme-yellow',
+      'dark:theme-red',
+      'dark:theme-purple',
+    ],
     content: [
 		"./index.html",
 		"./src/**/*.{js,ts,jsx,tsx}"

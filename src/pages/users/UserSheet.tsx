@@ -33,23 +33,8 @@ import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
 
-// Base schema for fields that are always present
-const baseSchema = z.object({
-  enabled: z.boolean(),
-  roleTextIds: z.array(z.string()).min(1, { message: "You must select at least one role." }),
-});
-
-// Schema for creating a new user (includes username and email)
-const addUserSchema = baseSchema.extend({
-    username: z.string().min(2, { message: "Username must be at least 2 characters." }),
-    email: z.string().email({ message: "Please enter a valid email." }),
-});
-
-// The final schema type
-type FormValues = z.infer<typeof addUserSchema>;
-
 interface UserSheetProps {
-  initialData: User | null // If null, it's in "add" mode. Otherwise, "edit" mode.
+  initialData: User | null
   isOpen: boolean
   onOpenChange: (isOpen: boolean) => void
   onSuccess: () => void
@@ -65,14 +50,39 @@ const formatDate = (timestamp?: number) => {
 }
 
 export function UserSheet({ initialData, isOpen, onOpenChange, onSuccess, roles }: UserSheetProps) {
+  const isEditMode = !!initialData;
+  
+  const formSchema = z.object({
+    username: z.string().optional(),
+    email: z.string().optional(),
+    enabled: z.boolean(),
+    roleTextIds: z.array(z.string()).min(1, { message: "You must select at least one role." }),
+  }).refine(data => {
+    // If not in edit mode, username and email are required
+    if (!isEditMode) {
+      return !!data.username && data.username.length >= 2;
+    }
+    return true;
+  }, {
+    message: "Username must be at least 2 characters.",
+    path: ["username"],
+  }).refine(data => {
+    if (!isEditMode) {
+      return !!data.email && z.string().email().safeParse(data.email).success;
+    }
+    return true;
+  }, {
+    message: "Please enter a valid email.",
+    path: ["email"],
+  });
+  
+  type FormValues = z.infer<typeof formSchema>;
+  
   const [isSubmitting, setIsSubmitting] = useState(false)
   const usernameInputRef = useRef<HTMLInputElement>(null);
 
-  const isEditMode = !!initialData;
-
   const form = useForm<FormValues>({
-    // Use the appropriate schema based on the mode
-    resolver: zodResolver(isEditMode ? baseSchema : addUserSchema),
+    resolver: zodResolver(formSchema), // Use the unified schema
     defaultValues: {
       username: "",
       email: "",
@@ -87,7 +97,7 @@ export function UserSheet({ initialData, isOpen, onOpenChange, onSuccess, roles 
       const userRoleIds = roles
         .filter(role => initialData.roles.includes(role.name))
         .map(role => role.textId);
-
+        
       form.reset({
         username: initialData.username,
         email: initialData.email,
@@ -110,7 +120,7 @@ export function UserSheet({ initialData, isOpen, onOpenChange, onSuccess, roles 
     if (isOpen && !isEditMode) {
       setTimeout(() => {
         usernameInputRef.current?.focus();
-      }, 100); // Small delay to ensure the input is rendered and focusable after the sheet animation
+      }, 100);
     }
   }, [isOpen, isEditMode]);
 
@@ -124,11 +134,16 @@ export function UserSheet({ initialData, isOpen, onOpenChange, onSuccess, roles 
         globalNotify({ title: "Success", description: "User updated successfully." });
       } else {
         // Create new user
-        await createUserApi(values);
+        // We can assert non-null here because the schema refinement guarantees they exist
+        await createUserApi({ 
+          username: values.username!, 
+          email: values.email!, 
+          roleTextIds: values.roleTextIds 
+        });
         globalNotify({ title: "Success", description: "User created successfully." });
       }
-      onSuccess() // Trigger refetch on the parent page
-      onOpenChange(false) // Close the sheet
+      onSuccess() 
+      onOpenChange(false) 
     } catch (error) {
       console.error("Failed to save user:", error)
       globalNotify({
@@ -140,7 +155,7 @@ export function UserSheet({ initialData, isOpen, onOpenChange, onSuccess, roles 
       setIsSubmitting(false)
     }
   }
-
+  
   const selectedRoles = roles.filter(role => form.watch('roleTextIds').includes(role.textId));
 
   return (
@@ -175,9 +190,10 @@ export function UserSheet({ initialData, isOpen, onOpenChange, onSuccess, roles 
                             <FormItem>
                             <FormLabel>Username <span className="text-destructive">*</span></FormLabel>
                             <FormControl>
-                                <Input
-                                    placeholder="e.g., johndoe"
+                                <Input 
+                                    placeholder="e.g., johndoe" 
                                     {...field}
+                                    value={field.value ?? ''} // handle optional value
                                     ref={usernameInputRef}
                                 />
                             </FormControl>
@@ -195,7 +211,11 @@ export function UserSheet({ initialData, isOpen, onOpenChange, onSuccess, roles 
                             <FormItem>
                             <FormLabel>Email <span className="text-destructive">*</span></FormLabel>
                             <FormControl>
-                                <Input placeholder="e.g., john.doe@example.com" {...field} />
+                                <Input 
+                                  placeholder="e.g., john.doe@example.com" 
+                                  {...field}
+                                  value={field.value ?? ''} // handle optional value
+                                />
                             </FormControl>
                             <FormDescription>
                                 The user will use this email for notifications.
@@ -206,7 +226,7 @@ export function UserSheet({ initialData, isOpen, onOpenChange, onSuccess, roles 
                         />
                     </>
                 )}
-
+                
                 <FormField
                   control={form.control}
                   name="enabled"

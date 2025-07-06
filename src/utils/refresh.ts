@@ -7,7 +7,8 @@ export const refreshTokenIfNeeded = async (): Promise<boolean> => {
   if (!refreshToken) return false;
 
   try {
-    const response = await refreshTokenApi(refreshToken);
+    // Corrected the call to pass an object
+    const response = await refreshTokenApi({ refreshToken });
     const newToken = response?.data?.data?.token;
 
     if (newToken) {

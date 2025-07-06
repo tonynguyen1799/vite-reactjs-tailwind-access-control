@@ -107,12 +107,12 @@ export function RoleSheet({ initialData, isOpen, onOpenChange, onSuccess, privil
       }
       onSuccess()
       onOpenChange(false)
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Failed to save role:", error)
       globalNotify({
         variant: "destructive",
         title: "Save Failed",
-        description: error.response?.data?.message || "Could not save the role.",
+        description: error instanceof Error ? error.message : "Could not save the role.",
       })
     } finally {
       setIsSubmitting(false)

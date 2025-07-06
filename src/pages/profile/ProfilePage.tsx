@@ -87,8 +87,8 @@ export default function ProfilePage() {
         const response = await updateProfileApi(values);
         setUser(response.data.data); // Update user in context
         globalNotify({ title: "Success", description: "Your profile has been updated." });
-    } catch (error: any) {
-        globalNotify({ variant: "destructive", title: "Update Failed", description: error.response?.data?.message || "Could not update your profile." });
+    } catch (error: unknown) {
+        globalNotify({ variant: "destructive", title: "Update Failed", description: error instanceof Error ? error.message : "Could not update your profile." });
     } finally {
         setIsProfileSubmitting(false)
     }
@@ -104,8 +104,8 @@ export default function ProfilePage() {
         });
         globalNotify({ title: "Success", description: "Your password has been changed successfully." });
         passwordForm.reset();
-    } catch (error: any) {
-        globalNotify({ variant: "destructive", title: "Change Password Failed", description: error.response?.data?.message || "Could not change your password." });
+    } catch (error: unknown) {
+        globalNotify({ variant: "destructive", title: "Change Password Failed", description: error instanceof Error ? error.message : "Could not change your password." });
     } finally {
         setIsPasswordSubmitting(false);
     }

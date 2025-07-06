@@ -2,8 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { HiOutlineHome, HiOutlineUsers, HiOutlineShieldCheck, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
 import { FiMenu } from 'react-icons/fi';
-import { LogOut, User } from 'lucide-react';
-
+import { LogOut, User, Palette } from 'lucide-react';
 import { useAuth } from '../contexts/useAuth';
 import { useMediaQuery } from 'react-responsive';
 import { Button } from '@/components/ui/button';
@@ -19,6 +18,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePermissions } from '@/contexts/usePermissions';
+import { useTheme } from '@/contexts/ThemeContext';
 
 const navLinks = [
     { to: '/', label: 'Dashboard', icon: <HiOutlineHome className="w-5 h-5" />, requiredPrivileges: [] },
@@ -31,6 +31,7 @@ export default function DashboardLayout() {
     const navigate = useNavigate();
     const { user, logout } = useAuth();
     const { hasPrivilege } = usePermissions();
+    const { setTheme } = useTheme();
 
     const isDesktop = useMediaQuery({ minWidth: 1024 });
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -59,36 +60,16 @@ export default function DashboardLayout() {
 
     return (
         <div className="flex h-screen bg-muted/40 overflow-hidden">
-            {/* Mobile overlay */}
-            <div
-                className={`fixed inset-0 z-40 bg-black bg-opacity-30 lg:hidden transition-opacity ${
-                    sidebarOpen ? 'opacity-100 visible backdrop-blur-sm' : 'opacity-0 invisible'
-                }`}
-                onClick={() => {
-                    const sidebar = document.querySelector('aside');
-                    if (sidebar) {
-                        sidebar.classList.remove('animate-slideIn');
-                        sidebar.classList.add('animate-slideOut');
-                    }
-                    setTimeout(() => {
-                        document.body.classList.remove('overflow-hidden');
-                        setSidebarOpen(false);
-                    }, 150);
-                }}
-            />
-
-            {/* Sidebar */}
             <aside
                 className={cn(
-                    "fixed md:relative z-50 bg-muted flex flex-col p-4 h-full md:h-screen inset-y-0 transform transition-all duration-300 ease-in-out",
+                    "fixed md:relative z-50 bg-muted flex flex-col p-4 h-full md:h-screen inset-y-0 transform transition-all duration-300 ease-in-out", // <-- Ensure bg-muted is here
                     sidebarCollapsed ? 'md:w-20' : 'md:w-64',
-                    "w-72", 
+                    "w-72",
                     sidebarOpen ? 'translate-x-0' : '-translate-x-full',
                     "md:translate-x-0"
                 )}
             >
                 <div className="flex flex-col items-center justify-center mb-6 h-14">
-                    {/* Logo placeholder */}
                 </div>
 
                 <TooltipProvider delayDuration={100}>
@@ -99,8 +80,8 @@ export default function DashboardLayout() {
                                     <Link
                                         to={link.to}
                                         className={cn(
-                                            "group flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-slate-100 dark:hover:bg-slate-800",
-                                            location.pathname === link.to && "bg-slate-200 dark:bg-slate-800 text-primary"
+                                            "group flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:bg-background/60",
+                                            location.pathname === link.to && "bg-background text-primary"
                                         )}
                                     >
                                         <span className="h-5 w-5">{link.icon}</span>
@@ -148,7 +129,6 @@ export default function DashboardLayout() {
                 </TooltipProvider>
             </aside>
 
-            {/* Main content */}
             <div className="flex-1 flex flex-col">
                 <header className="h-16 px-4 md:px-6 bg-background flex items-center justify-between">
                     <div className="flex items-center gap-4">
@@ -173,17 +153,32 @@ export default function DashboardLayout() {
 
                     <div className="flex items-center gap-2">
                         <DropdownMenu>
-                            <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => {}}>
-                                Zinc
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <Palette className="h-5 w-5" />
+                              <span className="sr-only">Toggle theme</span>
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setTheme("theme-zinc")}>
+                              Zinc
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => {}}>
-                                Blue
+                            <DropdownMenuItem onClick={() => setTheme("theme-blue")}>
+                              Blue
                             </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => {}}>
-                                Green
+                            <DropdownMenuItem onClick={() => setTheme("theme-green")}>
+                              Green
                             </DropdownMenuItem>
-                            </DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => setTheme("theme-yellow")}>
+                              Yellow
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setTheme("theme-red")}>
+                              Red
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setTheme("theme-purple")}>
+                              Purple
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
                         </DropdownMenu>
 
                         <DropdownMenu>

@@ -3,7 +3,7 @@ import { loginApi, getMeApi } from '../apis/auth.api';
 import type { LoginRequest, UserDetailResponse } from '../apis/types';
 import { globalNotify } from '@/lib/notify';
 
-interface AuthContextType {
+export interface AuthContextType {
   token: string | null;
   user: UserDetailResponse | null;
   setUser: (user: UserDetailResponse | null) => void;

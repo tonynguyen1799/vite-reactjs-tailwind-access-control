@@ -1,54 +1,69 @@
-# React + TypeScript + Vite
+# Access Control Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A React + TypeScript dashboard for managing users, roles, and access control, featuring modern UI components and global notification support.
 
-Currently, two official plugins are available:
+## Getting Started
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+### Prerequisites
 
-## Expanding the ESLint configuration
+- Node.js (v16+ recommended)
+- npm (v8+ recommended)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Installation
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```bash
+git clone <your-repo-url>
+cd access-control-dashboard
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Running the App
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
+```bash
+npm run dev
 ```
+
+The app will be available at [http://localhost:5173](http://localhost:5173) (or as specified in your terminal).
+
+### Building for Production
+
+```bash
+npm run build
+```
+
+### Linting & Type Checking
+
+```bash
+npm run lint
+npm run typecheck
+```
+
+## Project Structure
+
+- `src/`
+  - `apis/` — API logic for authentication, users, roles
+  - `auth/` — Route guards for authentication/privileges
+  - `components/` — UI components (shadcn/ui)
+  - `contexts/` — React context providers (e.g., Auth)
+  - `hooks/` — Custom React hooks
+  - `layouts/` — Layout components
+  - `lib/` — Utility libraries (e.g., notification)
+  - `pages/` — Page-level components
+  - `utils/` — HTTP and utility functions
+
+## Notifications
+
+Use the global notification system via:
+
+```ts
+import { globalNotify } from "@/lib/notify";
+globalNotify({ title: "Success", description: "Action completed!" });
+```
+
+## Contributing
+
+1. Fork the repo
+2. Create your feature branch (`git checkout -b feature/foo`)
+3. Commit your changes (`git commit -am 'Add foo'`)
+4. Push to the branch (`git push origin feature/foo`)
+5. Open a Pull Request

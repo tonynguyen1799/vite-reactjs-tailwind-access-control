@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react"
-import { MoreHorizontal, Pencil, Trash2, UserPlus, Search, CheckCircle2, XCircle, ListFilter, X, Users, Loader2 } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { MoreHorizontal, Pencil, Trash2, UserPlus, Search, CheckCircle2, XCircle, ListFilter, X } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -60,7 +60,7 @@ import { getRolesApi } from "@/apis/role.api"
 import type { User, Role } from "@/apis/types"
 import { globalNotify } from "@/lib/notify"
 import { UserSheet } from "@/pages/users/UserSheet"
-import { usePermissions } from "@/contexts/usePermissions" // Import the hook
+import { usePermissions } from "@/contexts/usePermissions"
 
 // A custom hook for debouncing a value
 const useDebounce = <T,>(value: T, delay: number): T => {
@@ -123,7 +123,7 @@ export default function UsersPage() {
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500)
   
-  const { hasPrivilege } = usePermissions() // Use the permissions hook
+  const { hasPrivilege } = usePermissions()
   const canWrite = hasPrivilege('USER_MANAGEMENT_WRITE');
 
   // Sync temp filters when dropdown opens
@@ -135,7 +135,7 @@ export default function UsersPage() {
     }
   }, [isFilterOpen, searchTerm, statusFilter, roleFilter])
 
-  const fetchUsersAndRoles = async () => {
+  const fetchUsersAndRoles = useCallback(async () => {
     setIsLoading(true)
     try {
       const rolesResponse = await getRolesApi()
@@ -176,11 +176,11 @@ export default function UsersPage() {
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [page, size, debouncedSearchTerm, statusFilter, roleFilter])
 
   useEffect(() => {
     fetchUsersAndRoles()
-  }, [page, size, debouncedSearchTerm, statusFilter, roleFilter])
+  }, [page, size, debouncedSearchTerm, statusFilter, roleFilter, fetchUsersAndRoles])
 
   useEffect(() => {
     setPage(1)
@@ -251,7 +251,7 @@ export default function UsersPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <CardTitle>Users</CardTitle>
-              <CardDescription>Manage your users and their permissions.</CardDescription>
+              <CardDescription className="text-muted-foreground">Manage your users and their permissions.</CardDescription>
             </div>
             <div className="flex w-full sm:w-auto items-center justify-between sm:justify-start gap-2">
               <div className="text-sm text-muted-foreground">
