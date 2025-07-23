@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { HiOutlineHome, HiOutlineUsers, HiOutlineShieldCheck, HiChevronDoubleLeft, HiChevronDoubleRight } from 'react-icons/hi';
-import { FiMenu } from 'react-icons/fi';
+import { FiMenu, FiKey } from 'react-icons/fi';
 import { LogOut, User, Palette } from 'lucide-react';
 import { useAuth } from '../contexts/useAuth';
 import { useMediaQuery } from 'react-responsive';
@@ -24,7 +24,7 @@ const navLinks = [
     { to: '/', label: 'Dashboard', icon: <HiOutlineHome className="w-5 h-5" />, requiredPrivileges: [] },
     { to: '/users', label: 'Users', icon: <HiOutlineUsers className="w-5 h-5" />, requiredPrivileges: ['USER_MANAGEMENT_READ'] },
     { to: '/roles', label: 'Roles', icon: <HiOutlineShieldCheck className="w-5 h-5" />, requiredPrivileges: ['ROLE_MANAGEMENT_READ'] },
-    { to: '/privileges', label: 'Privileges', icon: <HiOutlineShieldCheck className="w-5 h-5" />, requiredPrivileges: ['ROLE_MANAGEMENT_READ'] },
+    { to: '/privileges', label: 'Privileges', icon: <FiKey className="w-5 h-5" />, requiredPrivileges: ['ROLE_MANAGEMENT_READ'] },
 ];
 
 export default function DashboardLayout() {
