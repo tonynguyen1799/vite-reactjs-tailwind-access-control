@@ -1,5 +1,8 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import type { ToastActionElement } from '@/components/ui/toast'; // Import the correct type
+import { useToast } from '@/hooks/use-toast';
+import { Toaster } from './ui/toaster';
+import { setGlobalToast } from '@/lib/notify';
 
 export interface NotifyProps {
   title?: ReactNode; // Make title optional
@@ -8,18 +11,19 @@ export interface NotifyProps {
   action?: ToastActionElement; // Use the specific ToastActionElement type
 }
 
-const toastState: {
-  toast: (props: NotifyProps) => void;
-} = {
-  toast: () => {
-    // This is a fallback in case a toast is called before the toaster is ready.
-  },
-};
+export function GlobalToaster() {
+  const { toast } = useToast();
+  useEffect(() => {
+    setGlobalToast((props) => {
+      // Cast title and description to string | undefined to match Toast type
+      const { title, description, ...rest } = props;
+      toast({
+        ...rest,
+        title: title ? String(title) : undefined,
+        description: description ? String(description) : undefined,
+      });
+    });
+  }, [toast]);
 
-export function globalNotify(props: NotifyProps) {
-  toastState.toast(props);
-}
-
-export function setGlobalToast(toastFn: (props: NotifyProps) => void) {
-  toastState.toast = toastFn;
+  return <Toaster />;
 }

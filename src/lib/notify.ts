@@ -1,10 +1,11 @@
 import type { ReactNode } from 'react';
+import type { ToastActionElement } from '@/components/ui/toast';
 
 export interface NotifyProps {
-  title: ReactNode;
+  title?: ReactNode;
   description?: ReactNode;
   variant?: 'default' | 'destructive';
-  action?: ReactNode;
+  action?: ToastActionElement;
 }
 
 const toastState: {
