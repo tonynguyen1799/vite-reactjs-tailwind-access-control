@@ -24,6 +24,7 @@ const navLinks = [
     { to: '/', label: 'Dashboard', icon: <HiOutlineHome className="w-5 h-5" />, requiredPrivileges: [] },
     { to: '/users', label: 'Users', icon: <HiOutlineUsers className="w-5 h-5" />, requiredPrivileges: ['USER_MANAGEMENT_READ'] },
     { to: '/roles', label: 'Roles', icon: <HiOutlineShieldCheck className="w-5 h-5" />, requiredPrivileges: ['ROLE_MANAGEMENT_READ'] },
+    { to: '/privileges', label: 'Privileges', icon: <HiOutlineShieldCheck className="w-5 h-5" />, requiredPrivileges: ['ROLE_MANAGEMENT_READ'] },
 ];
 
 export default function DashboardLayout() {

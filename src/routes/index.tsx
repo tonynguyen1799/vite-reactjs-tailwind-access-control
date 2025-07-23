@@ -11,6 +11,7 @@ const DashboardPage = lazy(() => import('../pages/DashboardPage'));
 const RequirePrivilege = lazy(() => import('../auth/RequirePrivilege'));
 const ForbiddenPage = lazy(() => import('../pages/ForbiddenPage'));
 const ProfilePage = lazy(() => import('../pages/profile/ProfilePage'));
+const PrivilegesPage = lazy(() => import('../pages/privileges/PrivilegesPage'));
 
 const LoadingFallback = () => (
   <div className="h-screen w-screen flex justify-center items-center">
@@ -54,6 +55,10 @@ export const AppRoutes = () => {
 
           <Route element={<RequirePrivilege allowedPrivileges={['ROLE_MANAGEMENT_READ']} />}>
             <Route path="roles" element={<RolesPage />} />
+          </Route>
+
+          <Route element={<RequirePrivilege allowedPrivileges={['ROLE_MANAGEMENT_READ']} />}>
+            <Route path="privileges" element={<PrivilegesPage />} />
           </Route>
         </Route>
       </Routes>
